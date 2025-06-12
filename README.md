@@ -48,6 +48,10 @@ This implementation of HTTP server from scratch uses TCP primitives instead of u
 - Used `threads` instead of `processes` because http server is a `I/O` heavy one.
 
 ### Stage 7: Return a file
+- Read `directory name` from `command line arguments` - `argv`
 - HTTP `200` response for `GET \files\{file_name}` request with response body of file content.
 - `Content-Type` header set to `application/octet-stream`.
 - `Content-Length` header set to the `size of the file, in bytes`.
+
+### Stage 8: Read Request body
+- HTTP `201` response for `POST \files\{file_name}` request with request body contains `data` to write to the file mentioned in the URL path.
