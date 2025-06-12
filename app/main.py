@@ -31,11 +31,15 @@ def handle_client(client_socket: socket.socket, dir_name: str = None):
             user_agent = request_lines[2].split()[-1]
             response = response_with_body(user_agent)
         elif request_path.startswith("/echo"):
-            compression_method = request_lines[2].split(":")[-1].strip()
-            if compression_method == "gzip":
-                response = response_with_encoding()
-            elif compression_method == "invalid-encoding":
-                response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n"
+            if len(request_lines) > 2 and "Accept-Encoding:" in request_lines[2]:
+                compression_methods = request_lines[2].split(":")[1].split(",")
+                compression_methods = [method.strip()
+                                       for method in compression_methods]
+                print(f"compression_methods: {compression_methods}")
+                if "gzip" in compression_methods:
+                    response = response_with_encoding()
+                else:
+                    response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n"
             else:
                 random_input_string = request_path[6:]
                 response = response_with_body(random_input_string)

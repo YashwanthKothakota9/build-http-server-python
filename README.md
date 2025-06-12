@@ -56,5 +56,9 @@ This implementation of HTTP server from scratch uses TCP primitives instead of u
 ### Stage 8: Read Request body
 - HTTP `201` response for `POST \files\{file_name}` request with request body contains `data` to write to the file mentioned in the URL path.
 
-### Stage 9: Accept Encoding header
+### Stage 9: Accept-Encoding header
 - Server should respond based on `Accept-Encoding` header value with a `Content-Encoding` header value in response
+
+
+### Stage 10: Accept-Encoding header with multiple values
+- Server should respond based on multiple values in `Accept-Encoding` header 
