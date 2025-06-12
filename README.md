@@ -62,3 +62,7 @@ This implementation of HTTP server from scratch uses TCP primitives instead of u
 
 ### Stage 10: Accept-Encoding header with multiple values
 - Server should respond based on multiple values in `Accept-Encoding` header 
+
+### Stage 11: Add gzip compression of request body
+- Server should compress the request body using `gzip` and append those with `headers` in bytes
+- This should be done when `Accept-Encoding` header present with value `gzip`

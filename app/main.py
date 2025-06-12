@@ -1,6 +1,11 @@
 import socket
 import sys
+import gzip
 from concurrent.futures import ThreadPoolExecutor
+
+
+def compress_data(data: str):
+    return gzip.compress(data.encode("utf-8"))
 
 
 def response_with_body(body: str, file=False):
@@ -9,8 +14,9 @@ def response_with_body(body: str, file=False):
     return f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(body)}\r\n\r\n{body}\r\n\r\n"
 
 
-def response_with_encoding():
-    return f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\n\r\n"
+def response_with_encoding(compressed_data):
+    header = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: {len(compressed_data)}\r\n\r\n"
+    return header.encode("utf-8") + compressed_data
 
 
 def data_parser(data: bytes):
@@ -37,7 +43,10 @@ def handle_client(client_socket: socket.socket, dir_name: str = None):
                                        for method in compression_methods]
                 print(f"compression_methods: {compression_methods}")
                 if "gzip" in compression_methods:
-                    response = response_with_encoding()
+                    compressed_data = compress_data(request_path[6:])
+                    response = response_with_encoding(compressed_data)
+                    conn.sendall(response)
+                    return
                 else:
                     response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n"
             else:
