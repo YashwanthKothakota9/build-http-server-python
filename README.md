@@ -41,3 +41,8 @@ This implementation of HTTP server from scratch uses TCP primitives instead of u
 ### Stage 5: Read header 
 - Server should response with body the value of `User-agent` from headers
 - HTTP `200` response for `GET \user-agent` request with response body with `User-agent`s value from headers. 
+
+### Stage 6: Concurrent connections
+- Server should support `concurrent connections`.
+- Used `ThreadPoolExecutor` to support `concurrent connections`.
+- Used `threads` instead of `processes` because http server is a `I/O` heavy one.

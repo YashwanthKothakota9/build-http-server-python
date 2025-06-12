@@ -1,4 +1,5 @@
 import socket
+from concurrent.futures import ThreadPoolExecutor
 
 
 def response_with_body(body: str):
@@ -11,10 +12,8 @@ def data_parser(data: bytes):
     return request_lines
 
 
-def main():
-    server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
-    clinet_socket, addr = server_socket.accept()  # wait for client
-    with clinet_socket as conn:
+def handle_client(client_socket: socket.socket):
+    with client_socket as conn:
         data = conn.recv(1024)
         request_lines = data_parser(data)
         request_path = request_lines[0].split(" ")[1]
@@ -30,6 +29,15 @@ def main():
         else:
             response = "HTTP/1.1 404 Not Found\r\n\r\n"
         conn.sendall(response.encode("utf-8"))
+
+
+def main():
+    server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
+
+    with ThreadPoolExecutor(max_workers=10)as executor:
+        while True:
+            clinet_socket, addr = server_socket.accept()
+            executor.submit(handle_client, clinet_socket)
 
 
 if __name__ == "__main__":
