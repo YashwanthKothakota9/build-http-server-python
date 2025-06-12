@@ -15,8 +15,16 @@ and more.
 [codecrafters.io](https://codecrafters.io) to try the challenge.
 
 
+```
+This implementation of HTTP server from scratch uses TCP primitives instead of using Python's built-in HTTP libraries 
+```
+
+
 
 ### Stage 1: Bind server to a port
 - Create a server using `socket` module
 - bind it to a port `4221`
 - wait for incoming client connections using `accept()`
+
+### Stage 2: HTTP Response to the connection
+- Server should respond to the accepted connection with `200` http response.
