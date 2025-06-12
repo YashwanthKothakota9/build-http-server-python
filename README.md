@@ -46,3 +46,8 @@ This implementation of HTTP server from scratch uses TCP primitives instead of u
 - Server should support `concurrent connections`.
 - Used `ThreadPoolExecutor` to support `concurrent connections`.
 - Used `threads` instead of `processes` because http server is a `I/O` heavy one.
+
+### Stage 7: Return a file
+- HTTP `200` response for `GET \files\{file_name}` request with response body of file content.
+- `Content-Type` header set to `application/octet-stream`.
+- `Content-Length` header set to the `size of the file, in bytes`.
