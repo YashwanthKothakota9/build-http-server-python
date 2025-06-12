@@ -36,4 +36,8 @@ This implementation of HTTP server from scratch uses TCP primitives instead of u
 
 ### Stage 4: Response with body
 - Server should reponse with body
-- HTTP `200` response for `GET \echo\{str}` request with response body of `{str}` 
+- HTTP `200` response for `GET \echo\{str}` request with response body of `{str}`
+
+### Stage 5: Read header 
+- Server should response with body the value of `User-agent` from headers
+- HTTP `200` response for `GET \user-agent` request with response body with `User-agent`s value from headers. 
