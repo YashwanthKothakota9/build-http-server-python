@@ -32,4 +32,8 @@ This implementation of HTTP server from scratch uses TCP primitives instead of u
 ### Stage 3: URL Path parsing from request
 - Server should send response based on the URL path in the HTTP request.
 - HTTP `200` response for `GET \` request
-- HTTP `404` response for anything other than above url path. 
+- HTTP `404` response for anything other than above url path.
+
+### Stage 4: Response with body
+- Server should reponse with body
+- HTTP `200` response for `GET \echo\{str}` request with response body of `{str}` 
