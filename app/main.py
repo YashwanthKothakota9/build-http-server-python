@@ -9,6 +9,10 @@ def response_with_body(body: str, file=False):
     return f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(body)}\r\n\r\n{body}\r\n\r\n"
 
 
+def response_with_encoding():
+    return f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\n\r\n"
+
+
 def data_parser(data: bytes):
     data = data.decode("utf-8")
     request_lines = data.split("\r\n")
@@ -27,8 +31,14 @@ def handle_client(client_socket: socket.socket, dir_name: str = None):
             user_agent = request_lines[2].split()[-1]
             response = response_with_body(user_agent)
         elif request_path.startswith("/echo"):
-            random_input_string = request_path[6:]
-            response = response_with_body(random_input_string)
+            compression_method = request_lines[2].split(":")[-1].strip()
+            if compression_method == "gzip":
+                response = response_with_encoding()
+            elif compression_method == "invalid-encoding":
+                response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n"
+            else:
+                random_input_string = request_path[6:]
+                response = response_with_body(random_input_string)
         elif request_path.startswith("/files"):
             request_method = request_lines[0].split(" ")[0]
             file_name = request_path[7:]
