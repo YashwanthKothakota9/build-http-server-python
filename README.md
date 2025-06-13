@@ -77,3 +77,6 @@ This implementation of HTTP server from scratch uses TCP primitives instead of u
 - Keep each connection open for multiple requests
 - Process requests independently on each connection
 - Return appropriate responses for all requests
+  
+### Stage 14: Close the Connection
+- Server should close the connection if request header contains `Connection:close`
