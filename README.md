@@ -66,3 +66,8 @@ This implementation of HTTP server from scratch uses TCP primitives instead of u
 ### Stage 11: Add gzip compression of request body
 - Server should compress the request body using `gzip` and append those with `headers` in bytes
 - This should be done when `Accept-Encoding` header present with value `gzip`
+
+### Stage 12: Persistent Connection
+- Keep the TCP connection open after the first request
+- Handle any subsequent requests on the same connection
+- Return appropriate responses for both requests

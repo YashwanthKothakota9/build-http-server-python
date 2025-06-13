@@ -10,8 +10,8 @@ def compress_data(data: str):
 
 def response_with_body(body: str, file=False):
     if file:
-        return f"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {len(body)}\r\n\r\n{body}\r\n\r\n"
-    return f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(body)}\r\n\r\n{body}\r\n\r\n"
+        return f"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {len(body)}\r\n\r\n{body}"
+    return f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(body)}\r\n\r\n{body}"
 
 
 def response_with_encoding(compressed_data):
@@ -19,56 +19,108 @@ def response_with_encoding(compressed_data):
     return header.encode("utf-8") + compressed_data
 
 
-def data_parser(data: bytes):
+def parse_http_request(data: bytes):
+    """Parse HTTP request and return request path and headers"""
     data = data.decode("utf-8")
     request_lines = data.split("\r\n")
-    return request_lines
+    request_line = request_lines[0]
+    method, path, version = request_line.split(" ")
+
+    # Parse headers into a dictionary
+    headers = {}
+    for line in request_lines[1:]:
+        if not line:  # Empty line marks end of headers
+            break
+        if ":" in line:
+            key, value = line.split(":", 1)
+            headers[key.strip()] = value.strip()
+
+    return method, path, headers, ""
 
 
 def handle_client(client_socket: socket.socket, dir_name: str = None):
-    with client_socket as conn:
-        data = conn.recv(1024)
-        request_lines = data_parser(data)
-        request_path = request_lines[0].split(" ")[1]
+    buffer = b""
+    while True:
+        try:
+            # Receive data from client
+            data = client_socket.recv(1024)
+            if not data:  # Client closed connection
+                break
 
-        if request_path == "/":
-            response = "HTTP/1.1 200 OK\r\n\r\n"
-        elif request_path == "/user-agent":
-            user_agent = request_lines[2].split()[-1]
-            response = response_with_body(user_agent)
-        elif request_path.startswith("/echo"):
-            if len(request_lines) > 2 and "Accept-Encoding:" in request_lines[2]:
-                compression_methods = request_lines[2].split(":")[1].split(",")
-                compression_methods = [method.strip()
-                                       for method in compression_methods]
-                print(f"compression_methods: {compression_methods}")
-                if "gzip" in compression_methods:
-                    compressed_data = compress_data(request_path[6:])
-                    response = response_with_encoding(compressed_data)
-                    conn.sendall(response)
-                    return
+            buffer += data
+
+            # Process complete requests
+            while b"\r\n\r\n" in buffer:
+                # Split request and remaining data
+                request, buffer = buffer.split(b"\r\n\r\n", 1)
+                request += b"\r\n\r\n"  # Add back the separator
+
+                # Parse the request
+                method, request_path, headers, _ = parse_http_request(request)
+
+                # Get body if Content-Length is present
+                body = ""
+                if "Content-Length" in headers:
+                    content_length = int(headers["Content-Length"])
+                    if len(buffer) >= content_length:
+                        body = buffer[:content_length].decode("utf-8")
+                        buffer = buffer[content_length:]
+
+                print(f"method: {method}")
+                print(f"request_path: {request_path}")
+                print(f"headers: {headers}")
+                print(f"body: {body}")
+
+                # Handle the request
+                if request_path == "/":
+                    response = "HTTP/1.1 200 OK\r\n\r\n"
+                elif request_path == "/user-agent":
+                    user_agent = headers.get("User-Agent", "")
+                    response = response_with_body(user_agent)
+                elif request_path.startswith("/echo"):
+                    if "Accept-Encoding" in headers:
+                        compression_methods = headers["Accept-Encoding"].split(
+                            ",")
+                        compression_methods = [method.strip()
+                                               for method in compression_methods]
+                        if "gzip" in compression_methods:
+                            compressed_data = compress_data(request_path[6:])
+                            response = response_with_encoding(compressed_data)
+                            client_socket.sendall(response)
+                            continue
+                    random_input_string = request_path[6:]
+                    response = response_with_body(random_input_string)
+                elif request_path.startswith("/files"):
+                    file_name = request_path[7:]
+                    if method == "GET":
+                        try:
+                            with open(f"{dir_name}/{file_name}", "r") as file:
+                                response = response_with_body(
+                                    file.read(), True)
+                        except FileNotFoundError:
+                            response = "HTTP/1.1 404 Not Found\r\n\r\n"
+                    elif method == "POST":
+                        try:
+                            with open(f"{dir_name}/{file_name}", "w") as file:
+                                file.write(body)
+                            response = "HTTP/1.1 201 Created\r\n\r\n"
+                        except Exception as e:
+                            print(f"Error writing file: {e}")
+                            response = "HTTP/1.1 500 Internal Server Error\r\n\r\n"
                 else:
-                    response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n"
-            else:
-                random_input_string = request_path[6:]
-                response = response_with_body(random_input_string)
-        elif request_path.startswith("/files"):
-            request_method = request_lines[0].split(" ")[0]
-            file_name = request_path[7:]
-            if request_method == "GET":
-                try:
-                    with open(f"{dir_name}/{file_name}", "r") as file:
-                        response = response_with_body(file.read(), True)
-                except FileNotFoundError:
                     response = "HTTP/1.1 404 Not Found\r\n\r\n"
-            elif request_method == "POST":
-                request_body = request_lines[-1]
-                with open(f"{dir_name}/{file_name}", "w") as file:
-                    file.write(request_body)
-                response = "HTTP/1.1 201 Created\r\n\r\n"
-        else:
-            response = "HTTP/1.1 404 Not Found\r\n\r\n"
-        conn.sendall(response.encode("utf-8"))
+
+                # Send response
+                client_socket.sendall(response.encode("utf-8"))
+
+        except (socket.error, ConnectionResetError) as e:
+            print(f"Connection error: {e}")
+            break
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            break
+
+    client_socket.close()
 
 
 def main():
@@ -80,10 +132,10 @@ def main():
 
     server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
 
-    with ThreadPoolExecutor(max_workers=10)as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         while True:
-            clinet_socket, addr = server_socket.accept()
-            executor.submit(handle_client, clinet_socket, dir_name)
+            client_socket, addr = server_socket.accept()
+            executor.submit(handle_client, client_socket, dir_name)
 
 
 if __name__ == "__main__":
