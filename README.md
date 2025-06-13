@@ -71,3 +71,9 @@ This implementation of HTTP server from scratch uses TCP primitives instead of u
 - Keep the TCP connection open after the first request
 - Handle any subsequent requests on the same connection
 - Return appropriate responses for both requests
+
+### Stage 13: Add Support for Multiple Persistent Connections
+- Handle multiple concurrent TCP connections
+- Keep each connection open for multiple requests
+- Process requests independently on each connection
+- Return appropriate responses for all requests
