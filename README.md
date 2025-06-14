@@ -14,7 +14,7 @@ and more.
 <h1 align="center">HTTP Server from scratch in Python</h1>
 
 <div align="center">
-    <img src="/image.png" alt="Project completion image">
+    <img src="/python-http.png" alt="Project completion image">
 </div>
 
 
